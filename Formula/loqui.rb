@@ -6,12 +6,21 @@ class Loqui < Formula
   license "Apache-2.0"
   version "1.0.5"
 
-  depends_on "node"
+  # node is required at runtime but we don't pull it in as a Homebrew dep.
+  # users are expected to have node >=22 already installed (fnm, nvm, asdf, etc.)
+  on_macos do
+    depends_on :macos
+  end
 
   def install
     system "npm", "install", "--prefix", libexec, "--production",
-                             "--ignore-scripts", "--no-audit", "--no-fund"
-    bin.install_symlink Dir["#{libexec}/bin/*"]
+                             "--ignore-scripts", "--no-audit", "--no-fund",
+                             "@mihairo/loqui@#{version}"
+
+    (bin/"loqui").write <<~SHELL
+      #!/bin/bash
+      exec node "#{libexec}/lib/node_modules/@mihairo/loqui/dist/index.js" "$@"
+    SHELL
   end
 
   test do
