@@ -3,6 +3,11 @@ name: Bump cmt formula
 on:
   repository_dispatch:
     types: [bump-cmt]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (e.g. 1.2.0)"
+        required: true
 
 permissions:
   contents: write
@@ -17,7 +22,7 @@ jobs:
       - name: Compute sha256
         id: meta
         run: |
-          VERSION="${{ github.event.client_payload.version }}"
+          VERSION="${{ github.event.client_payload.version || github.event.inputs.version }}"
           URL="https://github.com/mihai-ro/cmt/archive/refs/tags/@mihairo/cmt-v${VERSION}.tar.gz"
           SHA=$(curl -fsSL "$URL" | shasum -a 256 | awk '{print $1}')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
