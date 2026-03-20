@@ -1,0 +1,39 @@
+name: Bump cmt formula
+
+on:
+  repository_dispatch:
+    types: [bump-cmt]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    name: Bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute sha256
+        id: meta
+        run: |
+          VERSION="${{ github.event.client_payload.version }}"
+          URL="https://github.com/mihai-ro/cmt/archive/refs/tags/@mihairo/cmt-v${VERSION}.tar.gz"
+          SHA=$(curl -fsSL "$URL" | shasum -a 256 | awk '{print $1}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Update formula
+        run: |
+          sed -i "s|url \".*\"|url \"${{ steps.meta.outputs.url }}\"|" Formula/cmt.rb
+          sed -i "s|sha256 \".*\"|sha256 \"${{ steps.meta.outputs.sha256 }}\"|" Formula/cmt.rb
+          sed -i "s|version \".*\"|version \"${{ steps.meta.outputs.version }}\"|" Formula/cmt.rb
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/cmt.rb
+          git commit -m "chore: bump cmt to v${{ steps.meta.outputs.version }}"
+          git push
