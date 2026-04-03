@@ -1,10 +1,10 @@
 class Cmt < Formula
   desc "Zero-dependency conventional commits CLI — prompt, linter, git hook installer"
   homepage "https://github.com/mihai-ro/cmt"
-  url "https://github.com/mihai-ro/cmt/archive/refs/tags/@mihairo/cmt-v1.2.0.tar.gz"
-  sha256 "ceb3acf61f5c8e8e973217404e1f8f7351ac20ca63d890baabf3a8cfe35d9d71"
+  url "https://github.com/mihai-ro/cmt/archive/refs/tags/@mihairo/cmt-v1.3.1.tar.gz"
+  sha256 "3fce464988129800171e1e48d41fd2cf9dbe1d81c8a37d76540eb3830b4d0411"
   license "MIT"
-  version "1.2.0"
+  version "1.3.1"
 
   def install
     bin.install "cmt"
