@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version (e.g. 1.2.0)"
+        description: "Version to bump to (e.g. 2.0.3)"
         required: true
 
 permissions:
@@ -19,21 +19,87 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Compute sha256
+      - name: Resolve version
         id: meta
         run: |
           VERSION="${{ github.event.client_payload.version || github.event.inputs.version }}"
-          URL="https://github.com/mihai-ro/cmt/archive/refs/tags/@mihairo/cmt-v${VERSION}.tar.gz"
-          SHA=$(curl -fsSL "$URL" | shasum -a 256 | awk '{print $1}')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
 
-      - name: Update formula
+      - name: Generate formula
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
         run: |
-          sed -i "s|url \".*\"|url \"${{ steps.meta.outputs.url }}\"|" Formula/cmt.rb
-          sed -i "s|sha256 \".*\"|sha256 \"${{ steps.meta.outputs.sha256 }}\"|" Formula/cmt.rb
-          sed -i "s|version \".*\"|version \"${{ steps.meta.outputs.version }}\"|" Formula/cmt.rb
+          python3 << 'PYEOF'
+          import json, urllib.request, os, sys
+
+          version = os.environ["VERSION"]
+          base_url = f"https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v{version}"
+
+          try:
+              with urllib.request.urlopen(f"{base_url}/checksums.json") as r:
+                  checksums = json.loads(r.read())
+          except Exception as e:
+              print(f"Failed to fetch checksums.json for v{version}: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          required = [
+              "cmt-aarch64-apple-darwin",
+              "cmt-x86_64-apple-darwin",
+              "cmt-aarch64-unknown-linux-gnu",
+              "cmt-x86_64-unknown-linux-gnu",
+          ]
+          missing = [k for k in required if k not in checksums]
+          if missing:
+              print(f"Missing checksums: {missing}", file=sys.stderr)
+              sys.exit(1)
+
+          formula = (
+              'class Cmt < Formula\n'
+              '  desc "Conventional Commits CLI — a single native binary"\n'
+              '  homepage "https://github.com/mihai-ro/cmt"\n'
+              f'  version "{version}"\n'
+              '  license "MIT"\n'
+              '\n'
+              '  on_macos do\n'
+              '    on_arm do\n'
+              f'      url "{base_url}/cmt-aarch64-apple-darwin"\n'
+              f'      sha256 "{checksums["cmt-aarch64-apple-darwin"]}"\n'
+              '    end\n'
+              '    on_intel do\n'
+              f'      url "{base_url}/cmt-x86_64-apple-darwin"\n'
+              f'      sha256 "{checksums["cmt-x86_64-apple-darwin"]}"\n'
+              '    end\n'
+              '  end\n'
+              '\n'
+              '  on_linux do\n'
+              '    on_arm do\n'
+              f'      url "{base_url}/cmt-aarch64-unknown-linux-gnu"\n'
+              f'      sha256 "{checksums["cmt-aarch64-unknown-linux-gnu"]}"\n'
+              '    end\n'
+              '    on_intel do\n'
+              f'      url "{base_url}/cmt-x86_64-unknown-linux-gnu"\n'
+              f'      sha256 "{checksums["cmt-x86_64-unknown-linux-gnu"]}"\n'
+              '    end\n'
+              '  end\n'
+              '\n'
+              '  def install\n'
+              '    bin.install Dir["cmt-*"].first => "cmt"\n'
+              '  end\n'
+              '\n'
+              '  test do\n'
+              '    assert_match "cmt version #{version}", shell_output("#{bin}/cmt --version")\n'
+              '    assert_match "feat", shell_output("#{bin}/cmt types")\n'
+              '    pipe_output("#{bin}/cmt lint", "feat: add login\\n", 0)\n'
+              '    pipe_output("#{bin}/cmt lint", "bad message\\n", 1)\n'
+              '  end\n'
+              'end\n'
+          )
+
+          with open("Formula/cmt.rb", "w") as f:
+              f.write(formula)
+
+          print(f"Formula updated to v{version}")
+          PYEOF
 
       - name: Commit and push
         run: |
