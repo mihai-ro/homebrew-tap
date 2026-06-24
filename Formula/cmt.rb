@@ -6,22 +6,22 @@ class Cmt < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v#{version}/cmt-aarch64-apple-darwin"
+      url "https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v2.0.3/cmt-aarch64-apple-darwin"
       sha256 "cfcfd20f8b5de87fe8cae47d2987a7b6bc8a534ae805fbca20975c1bc1e22f45"
     end
     on_intel do
-      url "https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v#{version}/cmt-x86_64-apple-darwin"
+      url "https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v2.0.3/cmt-x86_64-apple-darwin"
       sha256 "e48e186395955ce1509c85b01981d6e722d435cd4f0199d8e90d668eb757eb7c"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v#{version}/cmt-aarch64-unknown-linux-gnu"
+      url "https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v2.0.3/cmt-aarch64-unknown-linux-gnu"
       sha256 "20973e5792a86f00599ed52e5408ca1e7f2d645e9d6be979981152bcf61a8f4f"
     end
     on_intel do
-      url "https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v#{version}/cmt-x86_64-unknown-linux-gnu"
+      url "https://github.com/mihai-ro/cmt/releases/download/%40mihairo/cmt-v2.0.3/cmt-x86_64-unknown-linux-gnu"
       sha256 "6f8b999dd09818e5095602a57aeedc5cf7b0a0b136b54ae8aa82f29979f1d41a"
     end
   end
